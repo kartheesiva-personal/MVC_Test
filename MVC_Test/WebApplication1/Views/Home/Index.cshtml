@@ -1,0 +1,297 @@
+﻿@model List<RetailModel>
+@{string apppath = Convert.ToString(ApplicationInstance.Application["ApplicationPath"]);
+}
+@section style{
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+}
+@section scripts{
+    @Scripts.Render("~/bundles/jqueryval")
+    <script src="@apppath/Content/jqueryValidate/additional-methods.js"></script>
+    <script src="@apppath/Content/jqueryValidate/jquery.alphanum.js"></script>
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            $(".monthcount").hide();
+            $('[data-toggle="tooltip"]').tooltip();
+            $(".add").hide();
+            $(".NumericCls").numeric({
+                allowMinus: false,
+                allowThouSep: false,
+                maxDigits: 3
+            });
+            // Edit row on edit button click
+            $(document).on("click", ".edit", function () {
+                $(this).parents("tr").find("td .NumericCls").show();
+                $(this).parents("tr").find("td .NumericCls").prev("label").hide();
+                $(this).parents("tr").find(".add, .edit").toggle();
+
+            });
+
+            $(document).on("click", ".add", function () {
+
+                $(this).parents("tr").find("td .NumericCls").hide();
+                $(this).parents("tr").find("td .NumericCls").prev("label").show();
+                SaveRetailCount();
+                $(this).parents("tr").find(".add, .edit").toggle();
+
+
+            });
+
+            $(document).on("blur", ".NumericCls", function () {
+                
+                GrandTotalSum();
+            });
+            $(".delete").click(function () {
+                $("#DeleteId").val($(this).attr("UniqueId"));
+                $("#DeleteModal").modal("show");
+            });
+            $("#confirmBtn").click(function () {
+                DeleteRecord($("#DeleteId").val());
+            });
+
+        });
+
+
+        function GrandTotalSum() {
+
+            var calculated_total_sum = 0;
+
+            $(".monthcount").each(function () {
+                var get_textbox_value = $(this).val();
+                if ($.isNumeric(get_textbox_value)) {
+
+                    calculated_total_sum += parseInt(get_textbox_value);
+
+                }
+            });
+
+            $(".retailTotal").html(calculated_total_sum);
+           
+                        }
+
+        function SaveRetailCount() {
+            $.ajax({
+                url: "@(apppath+"/Home/SaveRetail")",
+                type: "POST",
+                async: true,
+                cache: false,
+                data: $("#AddRetail_Form").serialize(),
+                dataType: 'json',
+                success: function (res) {
+                    console.log(res);
+                    if (res == true) {
+                        window.location.reload();
+                    }
+                    else {
+                        $("#ErrorModal").modal("show");
+                    }
+                }
+            });
+        }
+
+        function DeleteRecord(uniqueId) {
+            $.ajax({
+                url: "@(apppath+"/Home/DeleteRecord")",
+                type: "POST",
+                async: true,
+                cache: false,
+                data: { "UniqueId":uniqueId },
+                dataType: 'json',
+                success: function (res) {
+                    console.log(res);
+                    if (res == true) {
+                        window.location.reload();
+                    }
+                    else {
+                        $("#ErrorModal").modal("show");
+                    }
+                }
+            });
+        }
+
+    </script>
+}
+
+
+@if (Model != null)
+{
+    <div class="col-xs-10 col-xs-offset-1 table-responsive">
+        <div class="col-sm-8"><h2>Retails <b>Details</b></h2></div>
+
+
+
+        @using (Html.BeginForm("Index", "Home", FormMethod.Post, new { id = "AddRetail_Form", enctype = "multipart/form-data" }))
+        {
+            @Html.AntiForgeryToken()
+            <table class="table table-bordered" style="cursor:pointer">
+                <thead class="bg-primary">
+                    <tr>
+                        <th scope="col" rowspan="3">E-CS</th>
+                        <th scope="col" rowspan="3">B Cat</th>
+                        <th scope="col" rowspan="3">Series</th>
+                        <th scope="col">Jan</th>
+                        <th scope="col">Feb</th>
+                        <th scope="col">Mar</th>
+                        <th scope="col">Apr</th>
+                        <th scope="col">May</th>
+                        <th scope="col">Jun</th>
+                        <th scope="col">Jul</th>
+                        <th scope="col">Aug</th>
+                        <th scope="col">Sep</th>
+                        <th scope="col">Oct</th>
+                        <th scope="col">Nov</th>
+                        <th scope="col">Dec</th>
+                        <th scope="col" rowspan="3">Total</th>
+                        <th scope="col" rowspan="3"> Actions</th>
+                    </tr>
+                    <tr>
+                        <th colspan="12">2022</th>
+
+                    </tr>
+                    <tr>
+                        <th scope="col">AC</th>
+                        <th scope="col">AC</th>
+                        <th scope="col">AC</th>
+                        <th scope="col">AC</th>
+                        <th scope="col">AC</th>
+                        <th scope="col">AC</th>
+                        <th scope="col">FC</th>
+                        <th scope="col">FC</th>
+                        <th scope="col">FC</th>
+                        <th scope="col">FC</th>
+                        <th scope="col">FC</th>
+                        <th scope="col">FC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model?.Any() ?? false)
+                    {
+                        foreach (RetailModel r in Model)
+                        {
+                            <tr>
+                                <td><label>@r.ECS</label></td>
+                                <td><label>@r.BCat</label></td>
+                                <td><label>@r.Series</label></td>
+                                <td>
+                                    <label>@r.Jan </label>
+                                    <input type="hidden" name="Jan" value="@r.Jan" class="monthcount" />
+                                    <input type="hidden" name="Id" value="@r.Id" class="monthcount" />
+                                    <input type="hidden" name="UniqueId" value="@r.UniqueId" class="monthcount" />
+                                </td>
+                                <td>
+                                    <label>@r.Feb</label>
+                                    <input type="hidden" name="Feb" value="@r.Feb" class="monthcount" />
+
+                                </td>
+                                <td>
+                                    <label>@r.Mar</label>
+                                    <input type="hidden" name="Mar" value="@r.Mar" class="monthcount" />
+
+                                </td>
+                                <td>
+                                    <label>@r.Apr</label>
+                                    <input type="hidden" name="Apr" value="@r.Apr" class="monthcount" />
+                                </td>
+                                <td>
+                                    <label>@r.May</label>
+                                    <input type="hidden" name="May" value="@r.May" class="monthcount" />
+                                </td>
+                                <td>
+                                    <label>@r.Jun</label>
+                                    <input type="hidden" name="Jun" value="@r.Jun" class="monthcount" />
+                                </td>
+                                <td class="col-auto">
+                                    <label>@r.Jul</label>
+                                    <input type="text" name="Jul" max="100" value="@r.Jul" class="monthcount NumericCls" style="width:40px;height:40px;padding:2px;" />
+
+                                </td>
+                                <td class="col-auto">
+                                    <label>@r.Aug</label>
+                                    <input type="text" name="Aug" max="100" value="@r.Aug" class="monthcount col-sm-1 NumericCls" style="width: 40px; height: 40px; padding: 2px;" />
+
+                                </td>
+                                <td class="col-auto">
+                                    <label>@r.Sep</label>
+                                    <input type="text" name="Sep" max="100" value="@r.Sep" class="monthcount col-sm-1 NumericCls" style="width: 40px; height: 40px; padding: 2px;" />
+                                </td>
+                                <td class="col-auto">
+                                    <label>@r.Oct</label>
+                                    <input type="text" name="Oct" max="100" value="@r.Oct" class="monthcount col-sm-1 NumericCls" style="width: 40px; height: 40px; padding: 2px;" />
+                                </td>
+                                <td class="col-auto">
+                                    <label>@r.Nov</label>
+                                    <input type="text" name="Nov" max="100" value="@r.Nov" class="monthcount col-sm-1 NumericCls" style="width: 40px; height: 40px; padding: 2px;" />
+
+                                </td>
+                                <td class="col-auto">
+                                    <label>@r.Dec</label>
+                                    <input type="text" name="Dec" max="100" value="@r.Dec" class="monthcount col-sm-1 NumericCls" style="width: 40px; height: 40px; padding: 2px;" />
+
+                                </td>
+
+                                <td class="retailTotal"><label>@r.Total</label></td>
+                                <td>
+                                    <a class="add" title="Save" data-toggle="tooltip"><i class="material-icons">&#xe876;</i></a>
+                                    <a class="edit" title="Edit" data-toggle="tooltip"><i class="material-icons">&#xE254;</i></a>
+                                    <a class="delete" title="Delete" UniqueId="@r.UniqueId" data-toggle="tooltip"><i class="material-icons">&#xE872;</i></a>
+                                </td>
+                            </tr>
+                        }
+
+                    }
+
+                </tbody>
+            </table>
+        }
+
+    </div>
+
+}
+
+<!-- Modal -->
+<div class="modal fade" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Error </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Please try again after some time...
+            </div>
+            <div class="modal-footer">
+
+
+                <button type="button" class="btn btn-primary" onclick="location.href='@apppath/';" data-dismiss="modal">OK</button>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="DeleteModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">DELETE CONFIRMATION </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Are you sure to delete this record?
+                <input type="hidden" id="DeleteId" />
+            </div>
+            <div class="modal-footer">
+
+
+                <button type="button" class="btn btn-primary" id="confirmBtn" data-dismiss="modal">Yes</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">No</button>
+
+            </div>
+        </div>
+    </div>
+</div>
